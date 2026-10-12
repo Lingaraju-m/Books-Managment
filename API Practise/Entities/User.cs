@@ -1,8 +1,8 @@
-﻿namespace Auth_Practise.Entities
+﻿namespace API_Practise.Entities
 {
     public class User
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
 
         public string PasswordHash { get; set; } = string.Empty;

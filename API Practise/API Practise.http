@@ -1,0 +1,28 @@
+@rootUrl = http://localhost:5177
+
+###
+GET {{rootUrl}}/api/Books
+
+###
+GET {{rootUrl}}/api/books/2
+
+###
+POST {{rootUrl}}/api/books
+Content-type: application/json
+{
+  "title": "Book 4",
+  "author": "Author 4",
+  "yearPublished": 2017
+}
+
+###
+PUT {{rootUrl}}/api/books/4
+Content-type: application/json
+{
+  "title" : "C# ebook",
+  "author" : "Ashii",
+  "yearPublished" : 2026
+}
+
+###
+DELETE {{rootUrl}}/api/books/10

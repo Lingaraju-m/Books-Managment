@@ -1,32 +1,21 @@
-﻿using Auth_Practise.Data;
-using Auth_Practise.Entities;
-using Auth_Practise.Models;
+﻿using API_Practise.Data;
+using API_Practise.Entities;
+using API_Practise.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
-namespace Auth_Practise.Service
+namespace API_Practise.Service
 {
-    public class AuthService(AuthDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(APIContext context, IConfiguration configuration) : IAuthService
     {
-        public async Task<List<AllUsersDto>> GetAllUsersAsync()
+       
+        public async Task<string> LoginAsync(userDto request)
         {
-            var users = await context.Users
-                .Select(u => new AllUsersDto
-                {
-                    Id = u.Id,
-                   Username= u.Username
-                }).ToListAsync();
-
-            return users;
-        }
-
-        public async Task<string> LoginAsync(UserDTO request)
-        {
-            var user= await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
             if (user is null)
             {
@@ -42,10 +31,10 @@ namespace Auth_Practise.Service
             return CreateToken(user);
         }
 
-        public async Task<User> RegisterAync(UserDTO request)
+        public async Task<User> RegisterAync(userDto request)
         {
-            
-            if(await context.Users.AnyAsync(u => u.Username == request.Username))
+
+            if (await context.Users.AnyAsync(u => u.Username == request.Username))
             {
                 return null;
             }
@@ -55,7 +44,7 @@ namespace Auth_Practise.Service
             var hasedPassword = new PasswordHasher<User>()
                 .HashPassword(user, request.Password);
 
-            if(request.Role == "Admin")
+            if (request.Role == "Admin")
             {
                 user.Roles = "Admin";
             }

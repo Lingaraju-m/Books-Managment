@@ -1,5 +1,6 @@
-using Auth_Practise.Data;
-using Auth_Practise.Service;
+
+using API_Practise.Data;
+using API_Practise.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +15,7 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
+builder.Services.AddDbContext<APIContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
@@ -32,8 +33,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!)),
             ValidateIssuerSigningKey = true
         };
-    });
 
+    });
+builder.Services.AddScoped<IBookService, BookSerice>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 var app = builder.Build();
 

@@ -1,15 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Auth_Practise.Models
+namespace API_Practise.Models
 {
-    public class UserDTO
+    public class userDto
     {
-        [Required]
         public string Username { get; set; } = string.Empty;
-
-        [Required]
         public string Password { get; set; } = string.Empty;
-
         public string Role { get; set; } = string.Empty;
     }
 }
