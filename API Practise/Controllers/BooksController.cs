@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
 
 namespace API_Practise.Controllers
 {
@@ -25,25 +27,43 @@ namespace API_Practise.Controllers
             return Ok(user);
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(userDto request)
+        public async Task<ActionResult<LoginChallengeDto>> Login(
+            userDto request)
         {
-            var toekn = await authService.LoginAsync(request);
+            var result = await authService.LoginAsync(request);
 
-            if (toekn == null)
-            {
-                return BadRequest("Invalid Username or Password!");
-            }
+            if (result.ChallengeToken is null)
+                return Unauthorized(result);
 
-            return Ok(toekn);
+            return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("verify-login-otp")]
+        public async Task<IActionResult> VerifyLoginOtp(
+        VerifyLoginOtpDto request)
+        {
+            var token = await authService.VerifyLoginOtpAsync(
+                request.ChallengeToken,
+                request.Otp);
+
+            if (token is null)
+                return Unauthorized(new
+                {
+                    message = "Invalid challenge or OTP."
+                });
+
+            return Ok(new { accessToken = token });
         }
 
         [Authorize]
         [HttpGet]
-        public async Task<ActionResult<List<BooksDto>>>GetBooks()
+        public async Task<ActionResult<List<BooksDto>>> GetBooks()
         {
             var books = await bookService.GetBooksAsync();
-            if(books is null || books.Count == 0)
+            if (books is null || books.Count == 0)
                 return NotFound("No books are present in the database!");
             return Ok(books);
         }
@@ -53,7 +73,7 @@ namespace API_Practise.Controllers
         public async Task<ActionResult<BooksDto>> GetBookById(int Id)
         {
             var book = await bookService.GetBookByIdAsync(Id);
-            if(book is null)
+            if (book is null)
                 return NotFound("The book your looking for is not present!");
             return Ok(book);
         }
@@ -75,7 +95,7 @@ namespace API_Practise.Controllers
         {
             var updatebook = await bookService.UpdateBookAsync(Id, book);
 
-            if(updatebook is null)
+            if (updatebook is null)
                 return NotFound("The book your looking for is not present!");
 
             return Ok(updatebook);
@@ -92,5 +112,49 @@ namespace API_Practise.Controllers
 
             return "The book has been successfully deleted..";
         }
+
+
+        [Authorize]
+        [HttpPost("setup-otp")]
+        public async Task<ActionResult<TotpSetupResponseDto>> SetupOtp()
+        {
+            var userIdClaim = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdClaim, out var userId))
+                return Unauthorized();
+
+            var qrCode = await authService.GenerateTotpQrCodeAsync(userId);
+
+            if (qrCode is null)
+                return Conflict(
+                    "User not found or TOTP is already enabled.");
+
+            return Ok(new TotpSetupResponseDto
+            {
+                QrCodeBase64 = qrCode
+            });
+        }
+
+        [Authorize]
+        [HttpPost("verify-otp-setup")]
+        public async Task<IActionResult> VerifyOtpSetup(
+            VerifyTotpDto request)
+        {
+            var userIdClaim = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdClaim, out var userId))
+                return Unauthorized();
+
+            var isValid = await authService.VerifyTotpSetupAsync(
+                userId, request.Otp);
+
+            if (!isValid)
+                return BadRequest("Invalid OTP or TOTP setup.");
+
+            return Ok("TOTP enabled successfully.");
+        }
+
     }
 }

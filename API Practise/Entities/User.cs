@@ -8,5 +8,9 @@
         public string PasswordHash { get; set; } = string.Empty;
 
         public string Roles { get; set; } = string.Empty;
+
+        public string? TotpSecretKey { get; set; }
+
+        public bool IsTotpEnabled { get; set; } = false;
     }
 }

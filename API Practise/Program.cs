@@ -34,6 +34,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true
         };
 
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var tokenType = context.Principal?
+                    .FindFirst("token_type")?.Value;
+
+                if (tokenType != "access")
+                {
+                    context.Fail("An access token is required.");
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+
+
     });
 builder.Services.AddScoped<IBookService, BookSerice>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -46,10 +63,13 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 
 app.Run();
